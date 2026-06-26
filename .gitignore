@@ -1,0 +1,25 @@
+# .NET / Visual Studio
+bin/
+obj/
+*.user
+*.suo
+.vs/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+*.dll
+*.pdb
+
+# Rider / VS Code
+.idea/
+.vscode/
+
+# Local config & secrets (host tokens, connection strings)
+appsettings.*.local.json
+appsettings.Development.json
+*.env
+.env
+
+# OS
+Thumbs.db
+.DS_Store
