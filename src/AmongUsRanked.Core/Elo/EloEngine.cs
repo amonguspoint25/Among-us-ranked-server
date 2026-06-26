@@ -27,4 +27,40 @@ public static class EloEngine
 
     public static double KFactor(int crewGames, int impostorGames)
         => IsProvisional(crewGames, impostorGames) ? ProvisionalK : StableK;
+
+    /// <summary>
+    /// Rate a finished match. Outcome-driven: only the winner matters. Each crew
+    /// member's Crew track and each impostor's Impostor track is updated by its own
+    /// K-factor toward the actual result.
+    /// </summary>
+    public static IReadOnlyList<RatedPlayer> Rate(EloMatchInput input)
+    {
+        if (input.Crew.Count == 0 || input.Impostors.Count == 0)
+            throw new ArgumentException("Both teams must have at least one player.", nameof(input));
+
+        double avgImp = input.Impostors.Average(p => p.ImpostorElo);
+        double avgCrew = input.Crew.Average(p => p.CrewElo);
+        double eImp = ExpectedImpostorScore(avgImp, avgCrew, input.ImpostorBaseRate);
+        double eCrew = 1.0 - eImp;
+        double sImp = input.Winner == Team.Impostor ? 1.0 : 0.0;
+        double sCrew = 1.0 - sImp;
+
+        var results = new List<RatedPlayer>(input.Crew.Count + input.Impostors.Count);
+
+        foreach (var p in input.Impostors)
+        {
+            double k = KFactor(p.CrewGames, p.ImpostorGames);
+            double after = p.ImpostorElo + k * (sImp - eImp);
+            results.Add(new RatedPlayer(p.FriendCode, Team.Impostor, p.ImpostorElo, after, after - p.ImpostorElo));
+        }
+
+        foreach (var p in input.Crew)
+        {
+            double k = KFactor(p.CrewGames, p.ImpostorGames);
+            double after = p.CrewElo + k * (sCrew - eCrew);
+            results.Add(new RatedPlayer(p.FriendCode, Team.Crew, p.CrewElo, after, after - p.CrewElo));
+        }
+
+        return results;
+    }
 }
